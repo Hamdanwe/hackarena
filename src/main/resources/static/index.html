@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HackArena — CTF Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #060a0f; --surface: #0d1117; --surface2: #111820;
+    --border: #1a2535; --accent: #00ffe1; --accent2: #ff3e6c;
+    --accent3: #f0c040; --text: #c9d1d9; --muted: #4a5568; --green: #39d353;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Rajdhani', sans-serif; font-size: 15px;
+    min-height: 100vh; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,225,0.012) 2px, rgba(0,255,225,0.012) 4px);
+    pointer-events: none; z-index: 1000;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(0,255,225,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,225,0.025) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; z-index: 900;
+  }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 2.5rem; width: 380px; position: relative;
+  }
+  .login-box::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+  }
+  .login-logo {
+    font-family: 'Share Tech Mono', monospace; font-size: 1.5rem;
+    color: var(--accent); letter-spacing: 3px; text-align: center;
+    margin-bottom: 4px;
+  }
+  .login-logo span { color: var(--accent2); }
+  .login-sub {
+    text-align: center; font-size: 0.75rem; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2rem;
+  }
+  .field-label {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+  }
+  .field-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem; padding: 10px 14px; outline: none; margin-bottom: 1.2rem;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  .btn-full {
+    width: 100%; background: rgba(0,255,225,0.08);
+    border: 1px solid var(--accent); color: var(--accent);
+    font-family: 'Rajdhani', sans-serif; font-weight: 700;
+    font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-full:hover { background: rgba(0,255,225,0.18); }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; background: rgba(6,10,15,0.96);
+    backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+    padding: 0 2rem; height: 56px;
+    display: flex; align-items: center; justify-content: space-between; z-index: 100;
+  }
+  .logo { font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; color: var(--accent); letter-spacing: 2px; }
+  .logo span { color: var(--accent2); }
+  .nav-links { display: flex; }
+  .nav-links button {
+    background: none; border: none; color: var(--muted);
+    font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 0 1.2rem; height: 56px; cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .nav-links button:hover, .nav-links button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .user-badge {
+    font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; color: var(--accent3);
+    background: rgba(240,192,64,0.08); border: 1px solid rgba(240,192,64,0.2);
+    padding: 4px 12px; cursor: pointer;
+  }
+
+  /* ── LAYOUT ── */
+  .wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── DASHBOARD ── */
+  .dash-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border); }
+  .dash-title { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:6px; }
+  .dash-name { font-size:2rem; font-weight:700; color:#fff; }
+  .dash-name span { color:var(--accent); }
+  .terminal-box { background:#020406; border:1px solid var(--border); padding:1rem; }
+  .terminal-line { font-family:'Share Tech Mono',monospace; font-size:0.76rem; color:var(--accent); padding:1px 0; }
+  .terminal-line.dim { color:var(--muted); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .blink { animation: blink 1s step-end infinite; }
+
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); padding:1.2rem 1.4rem; position:relative; overflow:hidden; transition:border-color 0.2s; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .stat-card.teal::before { background:var(--accent); }
+  .stat-card.red::before  { background:var(--accent2); }
+  .stat-card.gold::before { background:var(--accent3); }
+  .stat-card.green::before{ background:var(--green); }
+  .stat-card:hover { border-color:var(--accent); }
+  .stat-label { font-size:0.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .stat-value { font-family:'Share Tech Mono',monospace; font-size:1.9rem; color:#fff; line-height:1; }
+  .stat-card.teal .stat-value { color:var(--accent); }
+  .stat-card.red  .stat-value { color:var(--accent2); }
+  .stat-card.gold .stat-value { color:var(--accent3); }
+  .stat-card.green .stat-value{ color:var(--green); }
+  .stat-sub { font-size:0.76rem; color:var(--muted); margin-top:4px; }
+
+  .two-col { display:grid; grid-template-columns:1fr 320px; gap:1.5rem; }
+  .section-title { font-size:0.7rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .activity-list { display:flex; flex-direction:column; gap:6px; }
+  .activity-item { background:var(--surface); border:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; gap:10px; font-family:'Share Tech Mono',monospace; font-size:0.76rem; }
+  .act-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .act-dot.solved { background:var(--green); box-shadow:0 0 5px var(--green); }
+  .act-dot.failed { background:var(--accent2); }
+  .act-text { flex:1; color:var(--text); }
+  .act-pts { color:var(--accent3); font-weight:700; }
+  .act-time { color:var(--muted); font-size:0.68rem; }
+  .empty-state { color:var(--muted); font-family:'Share Tech Mono',monospace; font-size:0.8rem; padding:1rem 0; }
+
+  .progress-panel { background:var(--surface); border:1px solid var(--border); padding:1.4rem; }
+  .cat-progress { display:flex; flex-direction:column; gap:12px; }
+  .cat-row { display:flex; flex-direction:column; gap:4px; }
+  .cat-top { display:flex; justify-content:space-between; }
+  .cat-name { font-size:0.82rem; font-weight:600; letter-spacing:1px; }
+  .cat-score-lbl { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--muted); }
+  .bar-track { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:2px; transition:width 0.8s ease; }
+
+  /* ── CHALLENGES ── */
+  .challenge-controls { display:flex; gap:0.8rem; margin-bottom:1.5rem; align-items:center; flex-wrap:wrap; }
+  .filter-btn { background:none; border:1px solid var(--border); color:var(--muted); font-family:'Rajdhani',sans-serif; font-size:0.8rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:6px 14px; cursor:pointer; transition:all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { background:rgba(0,255,225,0.08); border-color:var(--accent); color:var(--accent); }
+  .search-box { background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'Share Tech Mono',monospace; font-size:0.8rem; padding:6px 12px; outline:none; margin-left:auto; width:210px; }
+  .search-box:focus { border-color:var(--accent); }
+
+  .challenges-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+  .chall-card { background:var(--surface); border:1px solid var(--border); padding:1.2rem; cursor:pointer; transition:all 0.22s; position:relative; overflow:hidden; }
+  .chall-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,255,225,0.07); }
+  .chall-card.solved { border-color:rgba(57,211,83,0.35); }
+  .chall-card.solved::after { content:'✓ SOLVED'; position:absolute; top:10px; right:10px; font-family:'Share Tech Mono',monospace; font-size:0.63rem; color:var(--green); letter-spacing:1px; }
+  .chall-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+  .chall-cat { font-size:0.63rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:2px 8px; }
+  .cat-Cryptography  { background:rgba(0,255,225,0.1);   color:var(--accent);  border:1px solid rgba(0,255,225,0.2); }
+  .cat-Encoding      { background:rgba(255,62,108,0.1);  color:var(--accent2); border:1px solid rgba(255,62,108,0.2); }
+  .cat-Forensics     { background:rgba(57,211,83,0.1);   color:var(--green);   border:1px solid rgba(57,211,83,0.2); }
+  .cat-Web\ Security { background:rgba(130,80,255,0.1);  color:#a78bfa;        border:1px solid rgba(130,80,255,0.2); }
+  .chall-pts { font-family:'Share Tech Mono',monospace; font-size:1.05rem; color:var(--accent3); font-weight:700; }
+  .chall-name { font-size:1rem; font-weight:700; color:#fff; margin-bottom:5px; }
+  .chall-desc { font-size:0.78rem; color:var(--muted); line-height:1.5; margin-bottom:10px; }
+  .chall-footer { display:flex; justify-content:space-between; align-items:center; }
+  .chall-diff { font-size:0.68rem; font-weight:700; letter-spacing:1px; }
+  .diff-Easy   { color:var(--green); }
+  .diff-Medium { color:var(--accent3); }
+  .diff-Hard   { color:var(--accent2); }
+  .chall-solves { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--muted); }
+
+  /* ── MODAL ── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(6,10,15,0.93); backdrop-filter:blur(8px); z-index:500; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); width:100%; max-width:560px; padding:2rem; position:relative; animation:slideUp 0.22s ease; max-height:90vh; overflow-y:auto; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .modal-close { position:absolute; top:1rem; right:1rem; background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; }
+  .modal-close:hover { color:var(--accent2); }
+  .modal-title { font-size:1.4rem; font-weight:700; color:#fff; margin:8px 0 4px; }
+  .modal-meta { font-family:'Share Tech Mono',monospace; color:var(--muted); font-size:0.75rem; margin-bottom:1rem; }
+  .modal-desc { color:var(--text); font-size:0.88rem; line-height:1.65; margin-bottom:1.2rem; white-space:pre-wrap; }
+  .hint-box { background:rgba(240,192,64,0.06); border:1px solid rgba(240,192,64,0.25); padding:10px 14px; font-size:0.82rem; color:var(--accent3); font-family:'Share Tech Mono',monospace; margin-bottom:1.2rem; display:none; }
+  .hint-box.show { display:block; }
+  .flag-row { display:flex; gap:8px; margin-bottom:8px; }
+  .flag-input { flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:'Share Tech Mono',monospace; font-size:0.85rem; padding:10px 14px; outline:none; }
+  .flag-input:focus { border-color:var(--accent); }
+  .flag-input.correct { border-color:var(--green); color:var(--green); }
+  .flag-input.wrong   { border-color:var(--accent2); animation:shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+  .btn { background:none; border:1px solid; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.85rem; letter-spacing:1px; text-transform:uppercase; padding:10px 18px; cursor:pointer; transition:all 0.2s; }
+  .btn-accent { border-color:var(--accent); color:var(--accent); }
+  .btn-accent:hover { background:rgba(0,255,225,0.1); }
+  .btn-gold { border-color:var(--accent3); color:var(--accent3); }
+  .btn-gold:hover { background:rgba(240,192,64,0.1); }
+  .flag-msg { font-family:'Share Tech Mono',monospace; font-size:0.8rem; min-height:18px; margin-bottom:1rem; }
+  .flag-msg.ok  { color:var(--green); }
+  .flag-msg.err { color:var(--accent2); }
+  .modal-actions { display:flex; gap:8px; }
+
+  /* ── LEADERBOARD ── */
+  .lb-table { width:100%; border-collapse:collapse; }
+  .lb-table th { text-align:left; font-size:0.68rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:8px 14px; border-bottom:1px solid var(--border); }
+  .lb-table td { padding:12px 14px; border-bottom:1px solid rgba(26,37,53,0.5); font-size:0.88rem; }
+  .lb-table tr:hover td { background:rgba(0,255,225,0.02); }
+  .lb-rank { font-family:'Share Tech Mono',monospace; font-size:0.88rem; color:var(--muted); }
+  .lb-rank.r1 { color:#ffd700; } .lb-rank.r2 { color:#c0c0c0; } .lb-rank.r3 { color:#cd7f32; }
+  .lb-user { font-weight:700; color:#fff; display:flex; align-items:center; gap:8px; }
+  .lb-avatar { width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:700; font-family:'Share Tech Mono',monospace; }
+  .lb-score { font-family:'Share Tech Mono',monospace; color:var(--accent3); font-size:0.92rem; font-weight:700; }
+  .lb-solves { color:var(--muted); font-family:'Share Tech Mono',monospace; font-size:0.8rem; }
+  .lb-bar-cell { width:160px; }
+  .lb-bar { height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .lb-bar-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent3)); border-radius:2px; }
+  .lb-you td { background:rgba(0,255,225,0.03) !important; }
+  .you-tag { font-size:0.6rem; color:var(--accent); border:1px solid var(--accent); padding:1px 5px; letter-spacing:1px; font-family:'Share Tech Mono',monospace; margin-left:6px; }
+
+  /* ── TOAST ── */
+  #toast { position:fixed; bottom:2rem; right:2rem; background:var(--surface); border:1px solid var(--green); padding:12px 20px; font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--green); z-index:999; transform:translateY(16px); opacity:0; transition:all 0.3s; pointer-events:none; box-shadow:0 0 20px rgba(57,211,83,0.2); }
+  #toast.show { transform:translateY(0); opacity:1; }
+  #toast.error { border-color:var(--accent2); color:var(--accent2); box-shadow:0 0 20px rgba(255,62,108,0.2); }
+
+  /* ── LOADING ── */
+  .loading { font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--muted); padding:2rem 0; }
+  .spinner { display:inline-block; animation:spin 1s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">HACK<span>ARENA</span></div>
+    <div class="login-sub">// CTF Learning Platform</div>
+    <div class="field-label">Username</div>
+    <input class="field-input" id="login-input" placeholder="enter your callsign..." maxlength="20"
+           onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn-full" onclick="doLogin()">▸ Enter HackArena</button>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="m-cat"></div>
+    <div class="modal-title" id="m-title"></div>
+    <div class="modal-meta"  id="m-meta"></div>
+    <div class="terminal-box" style="margin-bottom:1rem" id="m-terminal"></div>
+    <div class="modal-desc"  id="m-desc"></div>
+    <div class="hint-box"    id="m-hint"></div>
+    <div class="flag-row">
+      <input class="flag-input" id="flag-input" placeholder="FLAG{your_answer_here}"
+             onkeydown="if(event.key==='Enter')submitFlag()"/>
+      <button class="btn btn-accent" onclick="submitFlag()">Submit</button>
+    </div>
+    <div class="flag-msg" id="flag-msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="requestHint()">💡 Hint (–25 pts)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav id="main-nav" style="display:none">
+  <div class="logo">HACK<span>ARENA</span></div>
+  <div class="nav-links">
+    <button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button onclick="showPage('challenges',this)">Challenges</button>
+    <button onclick="showPage('leaderboard',this)">Leaderboard</button>
+  </div>
+  <div class="user-badge" id="nav-user">▸ ... | 0 pts</div>
+</nav>
+
+<div class="wrapper" id="main-wrapper" style="display:none">
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">// welcome back</div>
+        <div class="dash-name" id="dash-username">player<span>_x</span></div>
+      </div>
+      <div class="terminal-box" style="width:300px">
+        <div class="terminal-line dim">$ ctf --status</div>
+        <div class="terminal-line">▸ Server: <span id="server-status">CONNECTING...</span></div>
+        <div class="terminal-line">▸ API: <span style="color:var(--muted)">localhost:8080</span></div>
+        <div class="terminal-line dim">$ _&nbsp;<span class="blink">█</span></div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card teal">
+        <div class="stat-label">Total Score</div>
+        <div class="stat-value" id="stat-score">0</div>
+        <div class="stat-sub">pts earned</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Solved</div>
+        <div class="stat-value" id="stat-solved">0</div>
+        <div class="stat-sub" id="stat-solved-sub">of 0 challenges</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Global Rank</div>
+        <div class="stat-value" id="stat-rank">#–</div>
+        <div class="stat-sub">on leaderboard</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value" id="stat-remaining">0</div>
+        <div class="stat-sub">challenges left</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="section-title">Recent Activity</div>
+        <div class="activity-list" id="activity-list">
+          <div class="empty-state">▸ No activity yet. Solve a challenge!</div>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">Category Progress</div>
+        <div class="progress-panel">
+          <div class="cat-progress" id="cat-progress">
+            <div class="loading"><span class="spinner">⟳</span> Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHALLENGES ══ -->
+  <div class="page" id="page-challenges">
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">// active challenges</div>
+        <div class="dash-name">Challenge<span>s</span></div>
+      </div>
+    </div>
+    <div class="challenge-controls">
+      <button class="filter-btn active" onclick="filterCat('all',this)">All</button>
+      <button class="filter-btn" onclick="filterCat('Cryptography',this)">Crypto</button>
+      <button class="filter-btn" onclick="filterCat('Encoding',this)">Encoding</button>
+      <button class="filter-btn" onclick="filterCat('Forensics',this)">Forensics</button>
+      <button class="filter-btn" onclick="filterCat('Web Security',this)">Web</button>
+      <input class="search-box" placeholder="🔍  search..." oninput="filterSearch(this.value)"/>
+    </div>
+    <div class="challenges-grid" id="challenges-grid">
+      <div class="loading"><span class="spinner">⟳</span> Loading challenges from API...</div>
+    </div>
+  </div>
+
+  <!-- ══ LEADERBOARD ══ -->
+  <div class="page" id="page-leaderboard">
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">// global rankings</div>
+        <div class="dash-name">Leader<span>board</span></div>
+      </div>
+      <button class="btn btn-accent" onclick="loadLeaderboard()" style="height:40px">↻ Refresh</button>
+    </div>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>Rank</th><th>Player</th><th>Score</th>
+          <th>Solves</th><th class="lb-bar-cell">Progress</th>
+        </tr>
+      </thead>
+      <tbody id="lb-body">
+        <tr><td colspan="5" class="loading"><span class="spinner">⟳</span> Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /wrapper -->
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG — change this on Day 4 to your Railway URL
+// ══════════════════════════════════════════
+const API = 'http://localhost:8080/api';
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let USERNAME     = '';
+let allChallenges = [];
+let solvedIds     = new Set();
+let myScore       = 0;
+let currentChall  = null;
+let currentFilter = 'all';
+let currentSearch = '';
+let activityLog   = [];   // {text, pts, ok, time}
+
+// ══════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════
+function doLogin() {
+  const val = document.getElementById('login-input').value.trim();
+  if (!val || val.length < 2) { showToast('Enter a username (min 2 chars)', true); return; }
+  USERNAME = val;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-nav').style.display = 'flex';
+  document.getElementById('main-wrapper').style.display = 'block';
+  document.getElementById('dash-username').innerHTML = USERNAME + '<span>_arena</span>';
+  init();
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+async function init() {
+  await Promise.all([loadChallenges(), loadMyScore(), loadLeaderboard()]);
+  checkServerStatus();
+}
+
+async function checkServerStatus() {
+  try {
+    const r = await fetch(API + '/challenges');
+    if (r.ok) {
+      document.getElementById('server-status').textContent = 'ONLINE ✓';
+      document.getElementById('server-status').style.color = 'var(--green)';
+    }
+  } catch {
+    document.getElementById('server-status').textContent = 'OFFLINE ✗';
+    document.getElementById('server-status').style.color = 'var(--accent2)';
+    showToast('Cannot reach API. Is Spring Boot running?', true);
+  }
+}
+
+// ══════════════════════════════════════════
+//  LOAD CHALLENGES
+// ══════════════════════════════════════════
+async function loadChallenges() {
+  try {
+    const r = await fetch(API + '/challenges');
+    allChallenges = await r.json();
+    renderChallenges();
+    updateDashStats();
+    renderCategoryProgress();
+  } catch (e) {
+    document.getElementById('challenges-grid').innerHTML =
+      '<div class="loading" style="color:var(--accent2)">✗ Cannot connect to API. Make sure Spring Boot is running on port 8080.</div>';
+  }
+}
+
+// ══════════════════════════════════════════
+//  LOAD MY SCORE
+// ══════════════════════════════════════════
+async function loadMyScore() {
+  try {
+    const r    = await fetch(API + '/score/' + USERNAME);
+    const data = await r.json();
+    myScore  = data.score  || 0;
+    solvedIds = new Set(data.solved || []);
+    updateNavBadge();
+    updateDashStats();
+    renderChallenges();
+  } catch { /* server may be offline */ }
+}
+
+// ══════════════════════════════════════════
+//  LOAD LEADERBOARD
+// ══════════════════════════════════════════
+async function loadLeaderboard() {
+  try {
+    const r    = await fetch(API + '/leaderboard');
+    const data = await r.json();
+    renderLeaderboard(data);
+    updateRank(data);
+  } catch {
+    document.getElementById('lb-body').innerHTML =
+      '<tr><td colspan="5" style="color:var(--accent2);font-family:\'Share Tech Mono\',monospace;font-size:0.8rem;padding:1rem">✗ Cannot load leaderboard</td></tr>';
+  }
+}
+
+// ══════════════════════════════════════════
+//  RENDER CHALLENGES
+// ══════════════════════════════════════════
+function renderChallenges() {
+  const filtered = allChallenges.filter(c => {
+    const matchCat    = currentFilter === 'all' || c.category === currentFilter;
+    const matchSearch = c.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                        c.category.toLowerCase().includes(currentSearch.toLowerCase());
+    return matchCat && matchSearch;
+  });
+
+  if (filtered.length === 0) {
+    document.getElementById('challenges-grid').innerHTML =
+      '<div class="empty-state">No challenges found.</div>';
+    return;
+  }
+
+  document.getElementById('challenges-grid').innerHTML = filtered.map(c => {
+    const isSolved  = solvedIds.has(c.id);
+    const catClass  = 'cat-' + c.category.replace(' ', '\\ ');
+    const dots      = c.difficulty === 'Easy' ? '●' : c.difficulty === 'Medium' ? '●●' : '●●●';
+    return `
+    <div class="chall-card ${isSolved ? 'solved' : ''}" onclick="openChallenge(${c.id})">
+      <div class="chall-top">
+        <span class="chall-cat ${catClass}">${c.category}</span>
+        <span class="chall-pts">${c.points} pts</span>
+      </div>
+      <div class="chall-name">${c.name}</div>
+      <div class="chall-desc">${c.description.substring(0, 90)}${c.description.length > 90 ? '...' : ''}</div>
+      <div class="chall-footer">
+        <span class="chall-diff diff-${c.difficulty}">${dots} ${c.difficulty}</span>
+        <span class="chall-solves">${c.solves} solves</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  OPEN CHALLENGE MODAL
+// ══════════════════════════════════════════
+function openChallenge(id) {
+  currentChall = allChallenges.find(c => c.id === id);
+  const c = currentChall;
+  const catClass = 'cat-' + c.category.replace(' ', '\\ ');
+
+  document.getElementById('m-cat').innerHTML =
+    `<span class="chall-cat ${catClass}" style="margin-bottom:8px;display:inline-block">${c.category}</span>`;
+  document.getElementById('m-title').textContent = c.name;
+  document.getElementById('m-meta').textContent  =
+    `${c.points} pts  ·  ${c.difficulty}  ·  ${c.solves} solves`;
+  document.getElementById('m-terminal').innerHTML =
+    `<div class="terminal-line dim">$ ctf --challenge "${c.name}"</div>
+     <div class="terminal-line">▸ Category : ${c.category}</div>
+     <div class="terminal-line">▸ Points   : ${c.points}</div>
+     <div class="terminal-line">▸ Status   : ${solvedIds.has(c.id) ? '<span style="color:var(--green)">SOLVED ✓</span>' : '<span style="color:var(--accent3)">UNSOLVED</span>'}</div>`;
+  document.getElementById('m-desc').textContent = c.description;
+  document.getElementById('m-hint').className   = 'hint-box';
+  document.getElementById('m-hint').textContent = '';
+
+  const inp = document.getElementById('flag-input');
+  const msg = document.getElementById('flag-msg');
+  inp.value     = '';
+  inp.className = 'flag-input';
+  msg.textContent = '';
+  msg.className   = 'flag-msg';
+
+  if (solvedIds.has(c.id)) {
+    inp.value       = 'Already solved!';
+    inp.className   = 'flag-input correct';
+    msg.textContent = '✓ You already solved this challenge!';
+    msg.className   = 'flag-msg ok';
+  }
+
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal()        { document.getElementById('modal').classList.remove('open'); }
+function closeModalOutside(e){ if (e.target.id === 'modal') closeModal(); }
+
+// ══════════════════════════════════════════
+//  SUBMIT FLAG
+// ══════════════════════════════════════════
+async function submitFlag() {
+  const inp  = document.getElementById('flag-input');
+  const msg  = document.getElementById('flag-msg');
+  const flag = inp.value.trim();
+  if (!flag || solvedIds.has(currentChall.id)) return;
+
+  try {
+    const r    = await fetch(API + '/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: USERNAME, challengeId: currentChall.id, flag })
+    });
+    const data = await r.json();
+
+    if (data.correct) {
+      inp.className   = 'flag-input correct';
+      msg.textContent = `✓ ${data.message}`;
+      msg.className   = 'flag-msg ok';
+      myScore         = data.totalScore;
+      solvedIds.add(currentChall.id);
+
+      // Log activity
+      activityLog.unshift({ text: `Solved <b>${currentChall.name}</b>`, pts: '+' + currentChall.points, ok: true, time: 'just now' });
+      renderActivityLog();
+      updateNavBadge();
+      updateDashStats();
+      renderChallenges();
+      renderCategoryProgress();
+      loadLeaderboard();
+      showToast(`🎉 Correct! +${currentChall.points} pts — ${currentChall.name}`);
+      setTimeout(closeModal, 1800);
+    } else {
+      inp.className   = 'flag-input wrong';
+      msg.textContent = `✗ ${data.message}`;
+      msg.className   = 'flag-msg err';
+      activityLog.unshift({ text: `Wrong flag on <b>${currentChall.name}</b>`, pts: '–0', ok: false, time: 'just now' });
+      renderActivityLog();
+      setTimeout(() => inp.className = 'flag-input', 400);
+    }
+  } catch {
+    msg.textContent = '✗ Cannot reach API server.';
+    msg.className   = 'flag-msg err';
+  }
+}
+
+// ══════════════════════════════════════════
+//  HINT
+// ══════════════════════════════════════════
+async function requestHint() {
+  try {
+    const r    = await fetch(`${API}/challenges/${currentChall.id}/hint?username=${USERNAME}`);
+    const data = await r.json();
+    if (data.hint) {
+      const hintEl = document.getElementById('m-hint');
+      hintEl.textContent = '💡 Hint: ' + data.hint;
+      hintEl.classList.add('show');
+      showToast('Hint unlocked — 25 pts deducted');
+      myScore = data.totalScore ?? myScore;
+      updateNavBadge();
+    }
+  } catch {
+    showToast('Cannot load hint', true);
+  }
+}
+
+// ══════════════════════════════════════════
+//  LEADERBOARD RENDER
+// ══════════════════════════════════════════
+function renderLeaderboard(data) {
+  if (!data || data.length === 0) {
+    document.getElementById('lb-body').innerHTML =
+      '<tr><td colspan="5" class="empty-state" style="padding:1.5rem">No players yet. Be the first to solve a challenge!</td></tr>';
+    return;
+  }
+  const max = data[0].score || 1;
+  const medals = ['🥇','🥈','🥉'];
+
+  document.getElementById('lb-body').innerHTML = data.map((p, i) => {
+    const isMe   = p.username === USERNAME;
+    const rank   = i + 1;
+    const avatar = p.username.substring(0,2).toUpperCase();
+    const colors = ['#ff3e6c','#f0c040','#a78bfa','#00ffe1','#39d353','#60a5fa','#fb923c','#f472b6'];
+    const color  = colors[i % colors.length];
+    return `
+    <tr class="${isMe ? 'lb-you' : ''}">
+      <td class="lb-rank ${rank<=3?'r'+rank:''}">${rank<=3 ? medals[rank-1] : '#'+rank}</td>
+      <td>
+        <div class="lb-user">
+          <div class="lb-avatar" style="background:${color}22;color:${color};border:1px solid ${color}44">${avatar}</div>
+          ${p.username}${isMe ? '<span class="you-tag">YOU</span>' : ''}
+        </div>
+      </td>
+      <td class="lb-score">${p.score.toLocaleString()}</td>
+      <td class="lb-solves">${p.solves} / ${allChallenges.length || '?'}</td>
+      <td class="lb-bar-cell">
+        <div class="lb-bar">
+          <div class="lb-bar-fill" style="width:${((p.score/max)*100).toFixed(1)}%"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateRank(data) {
+  const idx = data.findIndex(p => p.username === USERNAME);
+  document.getElementById('stat-rank').textContent = idx >= 0 ? '#' + (idx+1) : '#–';
+}
+
+// ══════════════════════════════════════════
+//  DASHBOARD HELPERS
+// ══════════════════════════════════════════
+function updateDashStats() {
+  const total = allChallenges.length;
+  document.getElementById('stat-score').textContent     = myScore.toLocaleString();
+  document.getElementById('stat-solved').textContent    = solvedIds.size;
+  document.getElementById('stat-solved-sub').textContent= `of ${total} challenges`;
+  document.getElementById('stat-remaining').textContent = total - solvedIds.size;
+}
+
+function updateNavBadge() {
+  document.getElementById('nav-user').textContent = `▸ ${USERNAME}  |  ${myScore} pts`;
+}
+
+function renderActivityLog() {
+  if (activityLog.length === 0) {
+    document.getElementById('activity-list').innerHTML =
+      '<div class="empty-state">▸ No activity yet. Solve a challenge!</div>';
+    return;
+  }
+  document.getElementById('activity-list').innerHTML = activityLog.slice(0,8).map(a => `
+    <div class="activity-item">
+      <div class="act-dot ${a.ok ? 'solved' : 'failed'}"></div>
+      <div class="act-text">${a.text}</div>
+      <div class="act-pts" style="color:${a.ok ? 'var(--accent3)' : 'var(--accent2)'}">${a.pts}</div>
+      <div class="act-time">${a.time}</div>
+    </div>`).join('');
+}
+
+function renderCategoryProgress() {
+  const cats = {};
+  allChallenges.forEach(c => {
+    if (!cats[c.category]) cats[c.category] = { total:0, solved:0 };
+    cats[c.category].total++;
+    if (solvedIds.has(c.id)) cats[c.category].solved++;
+  });
+
+  const colors = { 'Cryptography':'var(--accent)', 'Encoding':'var(--accent2)', 'Forensics':'var(--green)', 'Web Security':'#a78bfa' };
+
+  document.getElementById('cat-progress').innerHTML = Object.entries(cats).map(([cat, v]) => {
+    const pct   = v.total ? (v.solved / v.total * 100).toFixed(0) : 0;
+    const color = colors[cat] || 'var(--accent3)';
+    return `
+    <div class="cat-row">
+      <div class="cat-top">
+        <span class="cat-name" style="color:${color}">${cat}</span>
+        <span class="cat-score-lbl">${v.solved}/${v.total}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  FILTERS
+// ══════════════════════════════════════════
+function filterCat(cat, btn) {
+  currentFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChallenges();
+}
+function filterSearch(val) {
+  currentSearch = val;
+  renderChallenges();
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'leaderboard') loadLeaderboard();
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = '', 3200);
+}
+</script>
+</body>
+</html>

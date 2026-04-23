@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "name": "Caesar's Secret",
+    "category": "Cryptography",
+    "description": "Decrypt this message: KHOOR ZRUOG. It uses a simple letter shift cipher.",
+    "hint": "Try shifting each letter back by 3 positions in the alphabet.",
+    "points": 100,
+    "difficulty": "Easy",
+    "flag": "FLAG{HELLO_WORLD}",
+    "solves": 42
+  },
+  {
+    "id": 2,
+    "name": "Base64 Basics",
+    "category": "Encoding",
+    "description": "Decode this string: Q1RGe0I0U0U2NF9JU19OT1RfRU5DUllQVElPTn0=",
+    "hint": "Base64 is an encoding scheme. Use an online decoder or Java's Base64 class.",
+    "points": 100,
+    "difficulty": "Easy",
+    "flag": "FLAG{B4SE64_IS_NOT_ENCRYPTION}",
+    "solves": 38
+  },
+  {
+    "id": 3,
+    "name": "Binary Message",
+    "category": "Encoding",
+    "description": "Convert this binary to text: 01000011 01010100 01000110 01111011 01000010 01001001 01001110 01000001 01010010 01011001 01111101",
+    "hint": "Each 8 bits = 1 ASCII character. Convert each byte separately.",
+    "points": 150,
+    "difficulty": "Easy",
+    "flag": "FLAG{BINARY}",
+    "solves": 29
+  },
+  {
+    "id": 4,
+    "name": "Password Audit",
+    "category": "Web Security",
+    "description": "A leaked password hash is: 5f4dcc3b5aa765d61d8327deb882cf99. What was the original password?",
+    "hint": "This is an MD5 hash. Try searching it in an online hash lookup database.",
+    "points": 150,
+    "difficulty": "Easy",
+    "flag": "FLAG{PASSWORD}",
+    "solves": 25
+  },
+  {
+    "id": 5,
+    "name": "XOR Simple",
+    "category": "Cryptography",
+    "description": "A single character was XORed with key 0x41 (decimal 65) to produce decimal value 47. What was the original character? Wrap it: FLAG{char}",
+    "hint": "XOR is reversible. 47 XOR 65 = ? Then convert the result to its ASCII character.",
+    "points": 200,
+    "difficulty": "Medium",
+    "flag": "FLAG{n}",
+    "solves": 18
+  },
+  {
+    "id": 6,
+    "name": "Log Analyser",
+    "category": "Forensics",
+    "description": "From these log entries, which IP made the most requests?\n192.168.1.1 x5\n10.0.0.5 x12\n172.16.0.1 x3\nWrap the answer: FLAG{IP_ADDRESS}",
+    "hint": "Simply count the requests per IP. The attacker always sends the most.",
+    "points": 100,
+    "difficulty": "Easy",
+    "flag": "FLAG{10.0.0.5}",
+    "solves": 50
+  },
+  {
+    "id": 7,
+    "name": "ROT13 Reveal",
+    "category": "Cryptography",
+    "description": "Decode this ROT13 string: SYNT{EBG13_VF_RNFL}",
+    "hint": "ROT13 shifts every letter by exactly 13 places. Apply it again to decode.",
+    "points": 100,
+    "difficulty": "Easy",
+    "flag": "FLAG{ROT13_IS_EASY}",
+    "solves": 45
+  },
+  {
+    "id": 8,
+    "name": "Hex Decode",
+    "category": "Encoding",
+    "description": "Convert this hex string to readable text: 464c41477b4845585f4d4153544552007d",
+    "hint": "Every 2 hex digits = 1 ASCII character. 46=F, 4c=L, 41=A...",
+    "points": 150,
+    "difficulty": "Easy",
+    "flag": "FLAG{HEX_MASTER}",
+    "solves": 33
+  }
+]
