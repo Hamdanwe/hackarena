@@ -1,0 +1,6 @@
+target/
+scores.csv
+*.class
+.idea/
+*.iml
+.vscode/
